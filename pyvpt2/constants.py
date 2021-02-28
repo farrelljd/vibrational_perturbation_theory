@@ -1,11 +1,11 @@
 from math import pi
 
-CELERITAS = 2.998e10  # cm s-1
+CELERITAS = 2.99792458e10  # cm s-1
 PLANCK = 6.62607004e-30  # kg cm^2 s-1
 NA = 6.02214076e23  # mol-1
 EH_2_PCM = 219474.63136320  # cm-1 Eh-1
 
-DISTANCE = {'bohr': 5.29177210904e-9,
+DISTANCE = {'bohr': 5.2917721083e-9,
             'm': 100,
             'angstrom': 1e-8,
             'cm': 1}

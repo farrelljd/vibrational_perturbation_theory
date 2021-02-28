@@ -10,9 +10,11 @@ class OrcaWrapper:
     def __init__(self, jobname, elements, theory, basis, *args, parallel=None):
         self.elements = elements
         self.jobname = jobname
-        if theory.lower() == 'mp2':
+        if 'mp2' in theory.lower():
             args = (*args, 'nofrozencore')
-        self.header = f'! {" ".join([theory, basis, *args])} bohrs tightscf ' + '{job_type:}\n'
+        if theory.lower() == 'ri-mp2':
+            basis = f'{basis} {basis}/C'
+        self.header = f'! {" ".join([theory, basis, *args])} bohrs verytightscf ' + '{job_type:}\n'
         if parallel is not None:
             self.header += f'%pal nprocs {parallel}\n    end\n'
 
@@ -49,7 +51,7 @@ class OrcaWrapper:
 
     def optimize(self, coords, charge=0, multiplicity=1):
         self.run_job('verytightopt', coords, charge, multiplicity)
-        return np.genfromtxt(f'{self.jobname}.xyz', skip_header=2, usecols=(1, 2, 3)) / 5.29177210904e-1
+        return np.genfromtxt(f'{self.jobname}.xyz', skip_header=2, usecols=(1, 2, 3)) / 5.291772083e-1
 
     def generate_hessian_columns(self, size):
         hess_lines = open(f'{self.jobname}.hess', 'r').readlines()
@@ -73,7 +75,7 @@ def main():
     pot = OrcaWrapper(jobname='job', elements=elements, theory='MP2', basis='6-31G*')
     coords = np.array([0.00000000000000, 0.00000000000000, 0.05568551114552,
                        0.00000000000000, 0.76411921207143, -0.54015925557276,
-                       0.00000000000000, -0.76411921207143, -0.64015925557275]) / 5.29177210904e-1
+                       0.00000000000000, -0.76411921207143, -0.64015925557275]) / 5.291772083e-1
     coords = pot.optimize(coords)
     v = pot.get_scf_energy(coords)
     print(v)
