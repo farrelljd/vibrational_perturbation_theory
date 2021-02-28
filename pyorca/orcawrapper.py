@@ -64,20 +64,32 @@ class OrcaWrapper:
         return self.read_geometry() / 5.291772083e-1
 
     def generate_hessian_columns(self, size):
-        hess_lines = open(f'{self.jobname}.hess', 'r').readlines()
-        start = hess_lines.index('$hessian\n')
-        end = hess_lines.index('$vibrational_frequencies\n')
-        hess_lines = hess_lines[start + 2:end - 1]
+        lines = open(f'{self.jobname}.hess', 'r').readlines()
+        start = lines.index('$hessian\n')
+        end = lines.index('$vibrational_frequencies\n')
+        hess_lines = lines[start + 2:end - 1]
+        blocks = []
         while hess_lines:
             block, hess_lines = hess_lines[:size + 1], hess_lines[size + 1:]
             block = "".join(block[1:])
-            yield np.loadtxt(StringIO(block))[:, 1:]
+            blocks.append(np.loadtxt(StringIO(block))[:, 1:])
+        hess = np.hstack(blocks)
+        start = lines.index('$atoms\n')
+        end = lines.index('$actual_temperature\n')
+        coords_lines = lines[start + 2:end - 1]
+        coords = np.loadtxt(StringIO("".join(coords_lines)), usecols=(2, 3, 4))
+        return hess, coords
 
     def get_hessian(self, coords, charge=0, multiplicity=1, opt=False):
         job_type = ('verytightopt ' if opt else '') + 'anfreq'
         n = coords.size // 3
         self.run_job(job_type, coords, charge, multiplicity)
-        return np.hstack([*self.generate_hessian_columns(coords.size)]).reshape((n, 3, n, 3,))
+        hess, x = self.generate_hessian_columns(coords.size)
+        hess = hess.reshape((n, 3, n, 3,))
+        if opt:
+            return hess, x
+        else:
+            return hess
 
 
 def main():
@@ -86,9 +98,8 @@ def main():
     coords = np.array([0.00000000000000, 0.00000000000000, 0.05568551114552,
                        0.00000000000000, 0.76411921207143, -0.54015925557276,
                        0.00000000000000, -0.76411921207143, -0.64015925557275]) / 5.291772083e-1
-    coords = pot.optimize(coords)
-    v = pot.get_scf_energy(coords)
-    print(v)
+    hess, coords = pot.get_hessian(coords, opt=True)
+    print(coords)
 
 
 if __name__ == '__main__':
