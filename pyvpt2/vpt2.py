@@ -53,7 +53,7 @@ def get_derivatives_hessian(hess_func, pos, masses, h, name, in_q=True, linear=F
             phi4[j, j, i, i] = phi4_small[i, j]
 
     else:
-        f2 = hess_func(pos, opt=True).reshape(*pos.shape, *pos.shape)
+        f2 = hess_func(pos).reshape(*pos.shape, *pos.shape)
         lamda, omega, evecs = transform_f2(f2, masses, pos, linear, **units)
 
         if save:

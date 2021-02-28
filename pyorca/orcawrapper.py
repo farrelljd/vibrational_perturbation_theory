@@ -49,9 +49,19 @@ class OrcaWrapper:
                 scf = float(line.strip().split()[-1])
         return scf
 
+    def read_geometry(self):
+        atoms = len(self.elements)
+        lines = open(f'{self.jobname}_property.txt', 'r').readlines()
+        x = None
+        for i, line in enumerate(lines):
+            if line == '------------------------ !GEOMETRY! -------------------------\n':
+                block = "".join(lines[i + 3:i + 3 + atoms])
+                x = np.loadtxt(StringIO(block), usecols=(1, 2, 3))
+        return x
+
     def optimize(self, coords, charge=0, multiplicity=1):
         self.run_job('verytightopt', coords, charge, multiplicity)
-        return np.genfromtxt(f'{self.jobname}.xyz', skip_header=2, usecols=(1, 2, 3)) / 5.291772083e-1
+        return self.read_geometry() / 5.291772083e-1
 
     def generate_hessian_columns(self, size):
         hess_lines = open(f'{self.jobname}.hess', 'r').readlines()
@@ -72,7 +82,7 @@ class OrcaWrapper:
 
 def main():
     elements = 'O H H'.split()
-    pot = OrcaWrapper(jobname='job', elements=elements, theory='MP2', basis='6-31G*')
+    pot = OrcaWrapper(jobname='job', elements=elements, theory='RHF', basis='sto-3g')
     coords = np.array([0.00000000000000, 0.00000000000000, 0.05568551114552,
                        0.00000000000000, 0.76411921207143, -0.54015925557276,
                        0.00000000000000, -0.76411921207143, -0.64015925557275]) / 5.291772083e-1
